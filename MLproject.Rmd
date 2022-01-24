@@ -1,0 +1,136 @@
+---
+title: "Practical Machine Learning Course Project"
+author: "Damian Strzelec"
+date: "1/24/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Project Goal
+The goal of project is to predict the manner in which participants did the exercise described below. This is the "classe" variable in the training set. Purpose of the analysis is to create model prediction to predict 20 different test cases.
+
+## Background
+Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement – a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. In this project, your goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. 
+
+## Data 
+* The training data for this project are available here: 
+https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv
+* The test data are available here:
+https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv
+
+ 
+## Required packages
+```{r message = FALSE, warning = FALSE}
+library(rattle)
+library(caret)
+library(plyr)
+library(rpart)
+library(randomForest)
+```
+
+# Loading the Data
+```{r}
+train_url <- "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv"
+test_url <- "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv"
+```
+
+```{r}
+train <- read.csv(url(train_url), na.strings=c("NA","#DIV/0!",""))
+test  <- read.csv(url(test_url), na.strings=c("NA","#DIV/0!",""))
+```
+```{r}
+dim(train)
+```
+```{r}
+dim(test)
+```
+# Cleaning the Data
+```{r}
+#Remove not available values from dataset and the first 7 columns as minor impact on the outcome
+feature <- names(test[,colSums(is.na(test)) == 0])[8:59]
+train <- train[,c(feature,"classe")]
+test <- test[,c(feature,"problem_id")]
+```
+
+```{r}
+dim(train) 
+```
+```{r}
+dim(test)
+```
+
+Cleaning the data results with 53 predictors out of 160
+
+
+# Data Partition
+
+Split train data into training data (70%) and testing data (30%) sample size   
+```{r}
+inTrain  <- createDataPartition(train$classe, p=0.7, list=FALSE)
+training <- train[inTrain,]
+testing  <- train[-inTrain,]
+```
+
+```{r}
+dim(training)
+```
+```{r}
+dim(testing)
+```
+
+# Model cross validation
+
+Make a model using cross validation using  Classification Tree and Random Forest methods. 
+
+## Classification Tree (CT)
+
+```{r}
+set.seed(10000)
+Model_CT <- train(classe ~ . , data = training , method = "rpart")
+fancyRpartPlot(Model_CT$finalModel, sub="")
+```
+
+#### Based on the graph the Level A is the most frequent. D appears to be none.
+
+
+```{r}
+#Model prediction on testing data   
+Prediction_CT <- predict(Model_CT, newdata = testing)
+confusionMatrix(table(Prediction_CT, testing$classe))
+```
+
+Based on Classification Tree Model prediction accuracy is ~50%.   
+
+## Random Forest (RF)
+
+```{r}
+#Create Model 
+set.seed(10000)
+Model_RF<- train(classe ~. , data=training, method= "rf", ntree=50)
+plot(Model_RF)
+```
+
+```{r}
+#Model prediction on testing data 
+Prediction_RF <- predict(Model_RF, testing)
+confusionMatrix(table(Prediction_RF, testing$classe))
+
+```
+
+
+
+Based on Random Forest Model prediction accuracy is above 99%.   
+
+# Conclusion
+
+Random Forest is more accurate than Classification Tree. Random forest model will be utilized for test data verification 
+
+
+```{r}
+#Model prediction on test data (pml-testing.csv)
+Test_Result <- predict(Model_RF, newdata = test)
+Test_Result
+```
