@@ -1,8 +1,10 @@
 ---
 title: "Practical Machine Learning Course Project"
 author: "Damian Strzelec"
-date: "1/24/2022"
-output: html_document
+date: "1/28/2022"
+output:
+  html_document: default
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -120,17 +122,24 @@ confusionMatrix(table(Prediction_RF, testing$classe))
 
 ```
 
+Based on Random Forest Model prediction accuracy is above 99%.  
 
+# Out of sample Model Testing results
 
-Based on Random Forest Model prediction accuracy is above 99%.   
-
-# Conclusion
-
-Random Forest is more accurate than Classification Tree. Random forest model will be utilized for test data verification 
-
+```{r SampleError, echo  =FALSE}
+SampleError <- c(0.5006, 0.0058)
+Model <- c("CT", "RF")
+Accuracy <- c(0.4994, 0.9942)
+data.frame(Model, Accuracy, SampleError)
+```
 
 ```{r}
 #Model prediction on test data (pml-testing.csv)
 Test_Result <- predict(Model_RF, newdata = test)
 Test_Result
 ```
+
+# Conclusion
+
+Random Forest is more accurate than Classification Tree. Random forest model was utilized for test data prediction
+
